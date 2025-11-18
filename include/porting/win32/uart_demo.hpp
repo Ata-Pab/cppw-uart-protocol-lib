@@ -70,7 +70,7 @@ namespace uart_protocol
 
         // TEST FUNCTION: Simulate incoming data to the UARt. Push bytes into rx_buffer_ to simulate incoming data
         // Custom function for Win32 testing purposes - Embedded firmware would not have this
-        void simulate_incoming_data(const std::vector<uint8_t>& bytes)
+        void simulate_incoming_data(const std::vector<uint8_t> &bytes)
         {
             std::lock_guard<std::mutex> lock(mutex_);
             for (auto mbyte : bytes)
@@ -78,6 +78,15 @@ namespace uart_protocol
                 rx_buffer_.push_back(mbyte);
             }
             cv_.notify_all(); // Notify any waiting receive_data calls
+        }
+
+        // TEST FUNCTION: Wait until at least `count` bytes are in the tx_buffer_ or timeout occurs
+        bool wait_for_tx_size(size_t count, std::chrono::milliseconds timeout = std::chrono::milliseconds(100))
+        {
+            auto deadline = std::chrono::steady_clock::now() + timeout;
+            std::unique_lock<std::mutex> uniquel(mutex_);
+            return cv_.wait_until(uniquel, deadline, [&]
+                                  { return tx_buffer_.size() >= count; });
         }
     };
 
