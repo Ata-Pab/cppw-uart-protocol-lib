@@ -46,7 +46,7 @@ namespace uart_protocol
             {
                 tx_buffer_.push_back(data[i]);
             }
-            cv_.notify_one(); // Notify any waiting receive_data calls
+            cv_.notify_all(); // Notify any waiting receive_data calls
             return true;
         }
 
@@ -55,7 +55,7 @@ namespace uart_protocol
         {
             if (!initialized_)
                 return 0;
-            std::unique_lock<std::mutex> lock(mutex_);
+            std::lock_guard<std::mutex> lock(mutex_);
             // cv_.wait_for(lock, std::chrono::milliseconds(100), [this]()
             //              { return !rx_buffer_.empty(); });
 
@@ -66,6 +66,18 @@ namespace uart_protocol
                 rx_buffer_.pop_front(); // Remove byte from buffer
             }
             return bytes_read;
+        }
+
+        // TEST FUNCTION: Simulate incoming data to the UARt. Push bytes into rx_buffer_ to simulate incoming data
+        // Custom function for Win32 testing purposes - Embedded firmware would not have this
+        void simulate_incoming_data(const std::vector<uint8_t>& bytes)
+        {
+            std::lock_guard<std::mutex> lock(mutex_);
+            for (auto mbyte : bytes)
+            {
+                rx_buffer_.push_back(mbyte);
+            }
+            cv_.notify_all(); // Notify any waiting receive_data calls
         }
     };
 
