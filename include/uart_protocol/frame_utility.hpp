@@ -15,6 +15,7 @@ namespace uart_protocol
 {
     struct Frame
     {
+        static constexpr uint16_t START_WORD = 0xAA55; // Frame start identifier - Edit if needed
         uint8_t type = 0;
         std::vector<uint8_t> payload;
     };
