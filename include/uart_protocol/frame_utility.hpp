@@ -20,11 +20,17 @@ namespace uart_protocol
         std::vector<uint8_t> payload;
     };
 
-
-    /* CRC-16-CCITT Implementation 
+    /* 
+    @brief
+    CRC-16-CCITT Implementation
         * Polynomial: 0x1021
         * Initial value: 0xFFFF
         * No reflection, no final XOR
+    @param data Pointer to the data buffer
+    @param len Length of the data buffer (excluding CRC bytes)
+    @return Calculated CRC16 value
+    @note
+    References:
     https://gist.github.com/rafacouto/59326c90d6a55f86a3ba
     https://os.mbed.com/users/hudakz/code/CRC16_CCITT/file/6ecc3a64bf7b/CRC16_CCITT.cpp/
     */
@@ -45,6 +51,7 @@ namespace uart_protocol
         return crc;
     }
 
+    //Construct a raw byte vector from a Frame structure. Returns the raw byte vector.
     inline std::vector<uint8_t> construct_frame(const Frame &frame)
     {
         std::vector<uint8_t> raw_frame; // buffer for the constructed frame
@@ -74,6 +81,48 @@ namespace uart_protocol
 
         return raw_frame;
     }
-    
+
+    // Parse a raw byte vector into a Frame structure. Returns true on success. 
+    inline bool parse_frame(const std::vector<uint8_t> &data, Frame &out_frame)
+    {
+        // Minimum frame size: START_WORD (2) + LEN (1) + TYPE (1) + CRC16 (2) = 6 bytes
+        if (data.size() < 6)
+        {
+            // Wait for more data
+            return false;
+        }
+
+        // Check START_WORD
+        uint16_t start_word = static_cast<uint16_t>(data[0]) | (static_cast<uint16_t>(data[1]) << 8);
+        if (start_word != Frame::START_WORD)
+        {
+            return false;
+        }
+
+        // Extract LEN
+        uint8_t payload_len = data[2];
+
+        // Check if the total size matches LEN
+        if (data.size() < static_cast<size_t>(6 + payload_len)) // 6 = 2 (START_WORD) + 1 (LEN) + 1 (TYPE) + 2 (CRC16)
+        {
+            // Wait for more data
+            return false;
+        }
+
+        // Calculate and verify CRC16
+        uint16_t received_crc = static_cast<uint16_t>(data[data.size() - 2]) | (static_cast<uint16_t>(data[data.size() - 1]) << 8);
+        uint16_t calculated_crc = crc16_ccitt(data.data(), data.size() - 2);
+        if (received_crc != calculated_crc)
+        {
+            // CRC mismatch
+            return false;
+        }
+
+        // Extract TYPE and PAYLOAD
+        out_frame.type = data[3];
+        out_frame.payload.assign(data.begin() + 4, data.begin() + 4 + payload_len); // 4 bytes offset to start of payload
+
+        return true;
+    }
 
 }
