@@ -8,12 +8,14 @@ This repo contains a C++ library for implementing a modern UART communication pr
     ├─ CMakeLists.txt
     ├─ include/
     │  ├─ uart_protocol/
-    │  │  ├─ iuart.hpp
-    │  │  ├─ mock_uart.hpp
+    │  │  ├─ peripheral.hpp
     │  │  ├─ protocol.hpp
-    │  │  └─ framing.hpp
+    │  │  └─ frame_utility.hpp
+    │  ├─ porting/
+    │  │  ├─ win32/
+    │  │  │  └─ uart_demo.hpp
     ├─ src/
-    │  └─ (empty for now; platform-specific implementations live in platform/* or provided by user)
+    │  └─ (empty for now; platform-specific implementations live in platform)
     ├─ tests/
     │  ├─ CMakeLists.txt
     │  └─ test_protocol.cpp
