@@ -1,7 +1,7 @@
 #pragma once
 #include <cstdint>
 
-// Include platform-specific headers outside the namespace
+// Include platform-specific headers
 #if defined(USE_FREERTOS) /* FreeRTOS Implementation */
 #include "FreeRTOS.h"
 #include "task.h"
@@ -10,7 +10,6 @@
 #include <thread>
 #elif defined(BARE_METAL) /* Custom: Platform-specific includes & definitions */
 /* USER CODE BEGIN */
-
 
 /* USER CODE END */
 #else
