@@ -12,7 +12,10 @@ namespace uart_protocol::config
     inline constexpr uint8_t ACK_TYPE = 0x02;           // Frame type for ACK – edit if needed
     inline constexpr uint8_t NACK_TYPE = 0x03;          // Frame type for NACK – edit if needed
     inline constexpr uint8_t DATA_TYPE = 0x04;          // Frame type for DATA – edit if needed
-    inline constexpr uint8_t ARE_YOU_THERE_TYPE = 0x05; // Frame type for ARE_YOU_THERE – edit if needed
+    inline constexpr uint8_t ARE_YOU_THERE_TYPE = 0x05; // Frame type for ARE_YOU_THERE (Keep-alive) – edit if needed
+    inline constexpr uint8_t CMD_TYPE = 0x06;           // Frame type for CMD (Command frame) – edit if needed
+    inline constexpr uint8_t RESP_TYPE = 0x07;          // Frame type for RESP (Response frame) – edit if needed
+    inline constexpr uint8_t ERROR_TYPE = 0x08;         // Frame type for ERROR – edit if needed
 
     // Max payload size
     inline constexpr size_t MAX_PAYLOAD_SIZE = 255; // Max payload size due to LEN being 1 byte
