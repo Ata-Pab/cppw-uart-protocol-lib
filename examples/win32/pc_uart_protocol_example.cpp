@@ -48,4 +48,9 @@ int main()
 
     producer_protocol.deinit();
     receiver_protocol.deinit();
+
+    std::cout << "UART Protocol Windows Demo is finished." << std::endl;
+
+    std::cin.get();
+    return 0;
 }
