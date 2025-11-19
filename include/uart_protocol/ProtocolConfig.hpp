@@ -11,9 +11,12 @@
  */
 
 /* Timing platform selection */
-#define configUSE_STD_CHRONO 1 // Set to 1 to use std::chrono timing, 0 for FreeRTOS or bare-metal
-#define configUSE_FREERTOS 0   // Set to 1 to use FreeRTOS timing, 0 for std::chrono or bare-metal
-#define configBARE_METAL 0     // Set to 1 to use bare-metal timing, 0 for std::chrono or FreeRTOS
+#define configUSE_STD_CHRONO 1       // Set to 1 to use std::chrono timing, 0 for FreeRTOS or bare-metal
+#define configUSE_FREERTOS 0         // Set to 1 to use FreeRTOS timing, 0 for std::chrono or bare-metal
+#define configBARE_METAL 0           // Set to 1 to use bare-metal timing, 0 for std::chrono or FreeRTOS
+/* Protocol behavior configuration */
+#define configUSE_STATIC_BUFFERS 0   // Set to 1 to use static buffers (for embedded compatibility), 0 for dynamic std::vector
+#define configUSE_NON_BLOCKING_API 0 // Set to 1 to enable non-blocking API (for waiting events), 0 for blocking API
 
 // Namespace for protocol configuration constants
 namespace uart_protocol::config
