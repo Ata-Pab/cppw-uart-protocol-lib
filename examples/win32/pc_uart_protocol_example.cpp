@@ -6,6 +6,8 @@
 #include <atomic>
 
 /*
+ * UART Protocol Example Application (PC - Windows)
+ 
  * Example implementation of Uart interface for PC (Windows-Port) using placeholder functions.
  * This is a mock implementation for demonstration purposes only.
  *
