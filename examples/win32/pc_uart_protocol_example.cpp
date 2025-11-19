@@ -25,18 +25,54 @@ int main()
     receiver_protocol.init();
 
     // SIMULATE Connection: In a real scenario, data sent from producer_uart would be received by receiver_uart.
-    // Here we simulate this by transferring data from producer's tx_buffer_ to receiver's rx_buffer_ and reading it by pushing to receiver_uart
+    // Here we simulate this by transferring data from producer's tx_buffer_ to receiver's rx_buffer_
 
+    std::cout << "\n=== Test 1: Simple frame send from producer to receiver ===" << std::endl;
     producer_protocol.send_frame(uart_protocol::config::DATA_TYPE, {0xDE, 0xAD, 0xBE, 0xEF});
+
     // Simulate data transfer from producer to receiver
     auto sent_data = producer_uart.simulate_clear_tx_buffer();
     for (auto byte : sent_data)
     {
         receiver_uart.simulate_incoming_data({byte});
+        std::cout << "Simulated byte 0x" << std::hex << static_cast<int>(byte) << " sent from producer to receiver." << std::endl;
     }
+    std::cout << "Frame sent successfully!\n"
+              << std::endl;
 
-    // Send frame and wait for ACK
-    bool ack_received = receiver_protocol.send_frame_wait_ack(uart_protocol::config::DATA_TYPE, {0xDE, 0xAD, 0xBE, 0xEF}, 500);
+    // Test 2: Send frame and wait for ACK (with proper ACK simulation)
+    std::cout << "=== Test 2: Send frame from receiver and wait for ACK ===" << std::endl;
+
+    // Start a thread to simulate the producer responding with ACK
+    std::thread ack_responder([&]()
+                              {
+        std::this_thread::sleep_for(std::chrono::milliseconds(50)); // Simulate processing delay
+        
+        // Transfer the frame from receiver to producer
+        auto frame_data = receiver_uart.simulate_clear_tx_buffer();
+        for (auto byte : frame_data)
+        {
+            producer_uart.simulate_incoming_data({byte});
+            std::cout << "Simulated byte 0x" << std::hex << static_cast<int>(byte) << " sent from receiver to producer." << std::endl;
+        }
+        
+        // Producer sends ACK back
+        producer_protocol.send_ack();
+        std::cout << "Producer sent ACK." << std::endl;
+        
+        // Transfer ACK from producer to receiver
+        auto ack_data = producer_uart.simulate_clear_tx_buffer();
+        for (auto byte : ack_data)
+        {
+            receiver_uart.simulate_incoming_data({byte});
+        }
+        std::cout << "Producer sent ACK back to receiver." << std::endl; } // End of lambda
+    );
+
+    bool ack_received = receiver_protocol.send_frame_wait_ack(uart_protocol::config::DATA_TYPE, {0xCA, 0xFE, 0xBA, 0xBE}, 500);
+
+    ack_responder.join(); // Wait for the responder thread to finish
+
     if (ack_received)
     {
         std::cout << "ACK received by receiver_protocol." << std::endl;
