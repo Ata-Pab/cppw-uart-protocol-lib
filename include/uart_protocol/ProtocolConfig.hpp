@@ -2,10 +2,20 @@
 #include <cstdint>
 #include <cstddef>
 
+/*
+ * Protocol Configuration - Configuration constants for UART Protocol.
+ * This header defines protocol-specific constants such as frame types,
+ * start words, maximum payload sizes, and default timeouts.
+ *
+ * These configurations can be adjusted as needed for different applications.
+ */
+
+// Define the platform for timing utility, see timing_utility.hpp for other options
 #ifndef USE_STD_CHRONO
-    #define USE_STD_CHRONO // Define the platform for timing utility
+    #define USE_STD_CHRONO 
 #endif
 
+// Namespace for protocol configuration constants
 namespace uart_protocol::config
 {
     // Protocol frame start word
