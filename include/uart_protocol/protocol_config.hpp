@@ -16,4 +16,4 @@ namespace uart_protocol::config
 
     // Default timeouts
     inline constexpr uint32_t DEFAULT_ACK_TIMEOUT_MS = 200; // Default timeout for ACK wait
-}
+} // namespace uart_protocol::config
