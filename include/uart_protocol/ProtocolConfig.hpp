@@ -10,10 +10,10 @@
  * These configurations can be adjusted as needed for different applications.
  */
 
-// Define the platform for timing utility, see timing_utility.hpp for other options
-#ifndef USE_STD_CHRONO
-    #define USE_STD_CHRONO 
-#endif
+/* Timing platform selection */
+#define configUSE_STD_CHRONO 1 // Set to 1 to use std::chrono timing, 0 for FreeRTOS or bare-metal
+#define configUSE_FREERTOS 0   // Set to 1 to use FreeRTOS timing, 0 for std::chrono or bare-metal
+#define configBARE_METAL 0     // Set to 1 to use bare-metal timing, 0 for std::chrono or FreeRTOS
 
 // Namespace for protocol configuration constants
 namespace uart_protocol::config
@@ -37,3 +37,18 @@ namespace uart_protocol::config
     // Default timeouts
     inline constexpr uint32_t DEFAULT_ACK_TIMEOUT_MS = 200; // Default timeout for ACK wait
 } // namespace uart_protocol::config
+
+/* Do not edit below this line */
+#if defined(configUSE_STD_CHRONO) && configUSE_STD_CHRONO
+#define USE_STD_CHRONO
+#elif defined(configUSE_FREERTOS) && configUSE_FREERTOS
+#define USE_FREERTOS
+#elif defined(configBARE_METAL) && configBARE_METAL
+#define BARE_METAL
+#else
+#error "No timing platform defined. Define configUSE_STD_CHRONO, configUSE_FREERTOS, or configBARE_METAL"
+#endif
+/* Only one timing platform should be defined */
+#if ((defined(configUSE_STD_CHRONO) && configUSE_STD_CHRONO) + (defined(configUSE_FREERTOS) && configUSE_FREERTOS) + (defined(configBARE_METAL) && configBARE_METAL) != 1)
+#error "Multiple timing platforms defined. Define only one of configUSE_STD_CHRONO, configUSE_FREERTOS, or configBARE_METAL"
+#endif
