@@ -39,6 +39,20 @@ namespace uart_protocol
             auto raw_frame = construct_frame(frame);
             return uart_.send_data(raw_frame.data(), raw_frame.size());
         }
+
+        // Send START_WORD over UART. No payload, just the start word.
+        bool send_start_word()
+        {
+            constexpr uint8_t TYPE_START = 0x01; // Define a type for START_WORD frame
+            return send_frame(TYPE_START, {});
+        }
+
+        // Send ACK frame over UART. No payload, just the ACK frame.
+        bool send_ack()
+        {
+            constexpr uint8_t ACK_TYPE = 0x02;
+            return send_frame(ACK_TYPE, {});
+        }
     };
 
 } // namespace uart_protocol
