@@ -2,12 +2,19 @@
 #include <cstdint>
 
 // Include platform-specific headers outside the namespace
-#if defined(USE_FREERTOS)
-    #include "FreeRTOS.h"
-    #include "task.h"
-#elif defined(USE_STD_CHRONO) || !defined(BARE_METAL)
-    #include <chrono>
-    #include <thread>
+#if defined(USE_FREERTOS) /* FreeRTOS Implementation */
+#include "FreeRTOS.h"
+#include "task.h"
+#elif defined(USE_STD_CHRONO) /* Standard C++ Implementation (PC) */
+#include <chrono>
+#include <thread>
+#elif defined(BARE_METAL) /* Custom: Platform-specific includes & definitions */
+/* USER CODE BEGIN */
+
+
+/* USER CODE END */
+#else
+#error "No timing platform defined. Define USE_FREERTOS, USE_STD_CHRONO, or BARE_METAL"
 #endif
 
 /*
