@@ -28,6 +28,17 @@ namespace uart_protocol
         {
             uart_.deinit();
         }
+
+        Protocol(uart_protocol::Uart &uart) : uart_(uart) {}
+
+        // Send a framed data packet over UART.
+        // Returns true if the frame was successfully sent.
+        bool send_frame(uint8_t type, const std::vector<uint8_t> &payload)
+        {
+            Frame frame = {type, payload};
+            auto raw_frame = construct_frame(frame);
+            return uart_.send_data(raw_frame.data(), raw_frame.size());
+        }
     };
 
 } // namespace uart_protocol
