@@ -41,6 +41,7 @@ int main()
               << std::endl;
 
     // Test 2: Send frame and wait for ACK (with proper ACK simulation)
+    // The Test 2 is in the development phase, do not trust its correctness yet
     std::cout << "=== Test 2: Send frame from receiver and wait for ACK ===" << std::endl;
 
     // Start a thread to simulate the producer responding with ACK
