@@ -65,13 +65,14 @@ int main()
         for (auto byte : ack_data)
         {
             receiver_uart.simulate_incoming_data({byte});
-        }
-        std::cout << "Producer sent ACK back to receiver." << std::endl; } // End of lambda
+            std::cout << "Simulated byte 0x" << std::hex << static_cast<int>(byte) << " sent from producer to receiver." << std::endl;
+        } } // End of lambda
     );
 
     bool ack_received = receiver_protocol.send_frame_wait_ack(uart_protocol::config::DATA_TYPE, {0xCA, 0xFE, 0xBA, 0xBE}, 500);
 
     ack_responder.join(); // Wait for the responder thread to finish
+    std::cout<< "Finished waiting task for ACK." << std::endl;    
 
     if (ack_received)
     {
