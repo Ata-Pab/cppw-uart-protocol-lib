@@ -1,5 +1,6 @@
 #pragma once
 #include "peripheral.hpp"
+#include "protocol_config.hpp"
 #include "frame_utility.hpp"
 #include <vector>
 #include <chrono>
@@ -20,11 +21,6 @@ namespace uart_protocol
         uart_protocol::Uart &uart_;
 
     public:
-        static constexpr uint8_t START_WORD_TYPE = 0x01;        // Frame type for START_WORD – edit if needed
-        static constexpr uint8_t ACK_TYPE = 0x02;               // Frame type for ACK – edit if needed
-        static constexpr size_t MAX_PAYLOAD_SIZE = 255;         // Max payload size due to LEN being 1 byte
-        static constexpr uint32_t DEFAULT_ACK_TIMEOUT_MS = 200; // Default timeout for ACK wait
-
         bool init()
         {
             return uart_.init();
@@ -56,7 +52,7 @@ namespace uart_protocol
          * @param timeout_ms Timeout in milliseconds to wait for the ACK.
          * @return true if ACK received, false on timeout or error.
          */
-        bool send_frame_wait_ack(uint8_t type, const std::vector<uint8_t> &payload, uint32_t timeout_ms = DEFAULT_ACK_TIMEOUT_MS)
+        bool send_frame_wait_ack(uint8_t type, const std::vector<uint8_t> &payload, uint32_t timeout_ms = config::DEFAULT_ACK_TIMEOUT_MS)
         {
             // Send the frame first
             if (!send_frame(type, payload))
@@ -66,7 +62,7 @@ namespace uart_protocol
 
             auto wait_until = std::chrono::steady_clock::now() + std::chrono::milliseconds(timeout_ms);
             std::vector<uint8_t> recv_buffer;
-            recv_buffer.reserve(MAX_PAYLOAD_SIZE); // Reserve buffer space to avoid multiple allocations
+            recv_buffer.reserve(config::MAX_PAYLOAD_SIZE); // Reserve buffer space to avoid multiple allocations
 
             uint8_t temp_buffer[64]; // Temporary buffer for receiving data
 
@@ -84,7 +80,7 @@ namespace uart_protocol
                     while (parse_frame(recv_buffer, received_frame))
                     {
                         // Check if the received frame is an ACK
-                        if (received_frame.type == ACK_TYPE)
+                        if (received_frame.type == config::ACK_TYPE)
                         {
                             return true; // ACK received
                         }
@@ -102,14 +98,13 @@ namespace uart_protocol
         // Send START_WORD over UART. No payload, just the start word.
         bool send_start_word()
         {
-            return send_frame(START_WORD_TYPE, {});
+            return send_frame(config::START_WORD_TYPE, {});
         }
 
         // Send ACK frame over UART. No payload, just the ACK frame.
         bool send_ack()
         {
-            return send_frame(ACK_TYPE, {});
+            return send_frame(config::ACK_TYPE, {});
         }
     };
-
 } // namespace uart_protocol
