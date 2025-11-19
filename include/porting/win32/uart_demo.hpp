@@ -80,6 +80,15 @@ namespace uart_protocol
             cv_.notify_all(); // Notify any waiting receive_data calls
         }
 
+        // TEST FUNCTION: Clear the tx_buffer_ to reset sent data and get what was "sent"
+        std::vector<uint8_t> simulate_clear_tx_buffer()
+        {
+            std::lock_guard<std::mutex> lock(mutex_);
+            std::vector<uint8_t> sent_data(tx_buffer_.begin(), tx_buffer_.end());
+            tx_buffer_.clear();
+            return sent_data;
+        }
+
         // TEST FUNCTION: Wait until at least `count` bytes are in the tx_buffer_ or timeout occurs
         bool wait_for_tx_size(size_t count, std::chrono::milliseconds timeout = std::chrono::milliseconds(100))
         {
