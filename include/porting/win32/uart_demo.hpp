@@ -1,5 +1,5 @@
 #pragma once
-#include "peripheral.hpp"
+#include "uart_protocol/peripheral.hpp"
 #include <deque>
 #include <mutex>
 #include <condition_variable>

@@ -1,6 +1,6 @@
-#include "peripheral.hpp"
-#include "protocol.hpp"
-#include "uart_demo.hpp"
+#include "uart_protocol/peripheral.hpp"
+#include "uart_protocol/protocol.hpp"
+#include "porting/win32/uart_demo.hpp"
 #include <iostream>
 #include <thread>
 
