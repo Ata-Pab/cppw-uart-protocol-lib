@@ -3,10 +3,14 @@
 #include "porting/win32/uart_demo.hpp"
 #include <iostream>
 #include <thread>
+#include <atomic>
 
 /*
  * Example implementation of Uart interface for PC (Windows-Port) using placeholder functions.
  * This is a mock implementation for demonstration purposes only.
+ * 
+ * Producer Uart: Sends frames and waits for ACKs.
+ * Receiver Uart: Receives frames and sends ACKs back.
  */
 
 int main()
@@ -40,49 +44,88 @@ int main()
     std::cout << "Frame sent successfully!\n"
               << std::endl;
 
-    // Test 2: Send frame and wait for ACK (with proper ACK simulation)
-    // The Test 2 is in the development phase, do not trust its correctness yet
-    std::cout << "=== Test 2: Send frame from receiver and wait for ACK ===" << std::endl;
+    // Test 2: Producer sends frame and waits for ACK, receiver receives and sends ACK back
+    std::cout << "=== Test 2: Producer sends frame with ACK (bidirectional communication) ===" << std::endl;
 
-    // Start a thread to simulate the producer responding with ACK
-    std::thread ack_responder([&]()
-                              {
-        std::this_thread::sleep_for(std::chrono::milliseconds(50)); // Simulate processing delay
+    std::atomic<bool> test_complete{false};
+
+    // Receiver thread: Monitors for incoming frames and sends ACK
+    std::thread receiver_thread([&]()
+                                {
+        std::cout << "Receiver Thread started, waiting for frames..." << std::endl;
         
-        // Transfer the frame from receiver to producer
-        auto frame_data = receiver_uart.simulate_clear_tx_buffer();
-        for (auto byte : frame_data)
-        {
-            producer_uart.simulate_incoming_data({byte});
-            std::cout << "Simulated byte 0x" << std::hex << static_cast<int>(byte) << " sent from receiver to producer." << std::endl;
+        std::vector<uint8_t> recv_buffer;
+        recv_buffer.reserve(uart_protocol::config::MAX_PAYLOAD_SIZE);
+        uint8_t temp_buffer[64];
+        
+        while (!test_complete.load()) {
+            // Simulate data transfer from producer to receiver
+            auto data_from_producer = producer_uart.simulate_clear_tx_buffer();
+            if (!data_from_producer.empty()) {
+                for (auto byte : data_from_producer) {
+                    receiver_uart.simulate_incoming_data({byte});
+                    std::cout << "Producer transmits 0x" << std::hex << static_cast<int>(byte) << " -> receiver" << std::endl;
+                }
+            }
+            
+            // Try to receive data
+            size_t n = receiver_uart.receive_data(temp_buffer, sizeof(temp_buffer));
+            if (n > 0) {
+                recv_buffer.insert(recv_buffer.end(), temp_buffer, temp_buffer + n);
+                
+                // Try to parse frame
+                uart_protocol::Frame received_frame;
+                if (uart_protocol::parse_frame(recv_buffer, received_frame)) {
+                    std::cout << "Receiver Frame received! Type: 0x" << std::hex << static_cast<int>(received_frame.type) 
+                              << ", Payload size: " << std::dec << received_frame.payload.size() << std::endl;
+                    
+                    // Clear the buffer after successful parse
+                    recv_buffer.clear();
+                    
+                    // Send ACK back
+                    std::cout << "Receiver Sending ACK..." << std::endl;
+                    receiver_protocol.send_ack();
+                }
+            }
+            
+            // Simulate data transfer from receiver to producer (ACK)
+            auto data_from_receiver = receiver_uart.simulate_clear_tx_buffer();
+            if (!data_from_receiver.empty()) {
+                for (auto byte : data_from_receiver) {
+                    producer_uart.simulate_incoming_data({byte});
+                    std::cout << "Receiver transmits 0x" << std::hex << static_cast<int>(byte) << " -> producer" << std::endl;
+                }
+            }
+            
+            std::this_thread::sleep_for(std::chrono::milliseconds(5));
+        }
+        std::cout << "Receiver Thread finished." << std::endl; });
+
+    // Producer thread: sends frame and waits for ACK
+    std::thread producer_thread([&]()
+                                {
+        std::cout << "Producer Thread started, sending frame..." << std::endl;
+        
+        // Send frame and wait for ACK
+        bool ack_received = producer_protocol.send_frame_wait_ack(
+            uart_protocol::config::DATA_TYPE, 
+            {0xCA, 0xFE, 0xBA, 0xBE}, 
+            2000);
+        
+        if (ack_received) {
+            std::cout << "Producer ACK received successfully!" << std::endl;
+        } else {
+            std::cout << "Producer ACK NOT received (timeout)" << std::endl;
         }
         
-        // Producer sends ACK back
-        producer_protocol.send_ack();
-        std::cout << "Producer sent ACK." << std::endl;
-        
-        // Transfer ACK from producer to receiver
-        auto ack_data = producer_uart.simulate_clear_tx_buffer();
-        for (auto byte : ack_data)
-        {
-            receiver_uart.simulate_incoming_data({byte});
-            std::cout << "Simulated byte 0x" << std::hex << static_cast<int>(byte) << " sent from producer to receiver." << std::endl;
-        } } // End of lambda
-    );
+        test_complete.store(true);
+        std::cout << "Producer Thread finished." << std::endl; });
 
-    bool ack_received = receiver_protocol.send_frame_wait_ack(uart_protocol::config::DATA_TYPE, {0xCA, 0xFE, 0xBA, 0xBE}, 500);
+    // Wait for both threads to complete
+    producer_thread.join();
+    receiver_thread.join();
 
-    ack_responder.join(); // Wait for the responder thread to finish
-    std::cout<< "Finished waiting task for ACK." << std::endl;    
-
-    if (ack_received)
-    {
-        std::cout << "ACK received by receiver_protocol." << std::endl;
-    }
-    else
-    {
-        std::cout << "ACK NOT received by receiver_protocol." << std::endl;
-    }
+    std::cout << "\n=== Test 2 Complete ===" << std::endl;
 
     producer_protocol.deinit();
     receiver_protocol.deinit();
