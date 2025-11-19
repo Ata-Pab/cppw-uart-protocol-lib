@@ -11,8 +11,23 @@
  * It handles high-level operations: send_frame, wait_ack, send_start_word, etc.
  * This implementation is intentionally portable and blocking. For embedded you can
  * provide different wait mechanism (RTOS event, ISR, DMA callback).
-*/
+ */
 namespace uart_protocol
 {
+    class Protocol
+    {
+    private:
+        uart_protocol::Uart &uart_;
 
-}
+    public:
+        bool init()
+        {
+            return uart_.init();
+        }
+        void deinit()
+        {
+            uart_.deinit();
+        }
+    };
+
+} // namespace uart_protocol
