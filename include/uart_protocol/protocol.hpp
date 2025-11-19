@@ -20,6 +20,11 @@ namespace uart_protocol
         uart_protocol::Uart &uart_;
 
     public:
+        static constexpr uint8_t START_WORD_TYPE = 0x01;        // Frame type for START_WORD – edit if needed
+        static constexpr uint8_t ACK_TYPE = 0x02;               // Frame type for ACK – edit if needed
+        static constexpr size_t MAX_PAYLOAD_SIZE = 255;         // Max payload size due to LEN being 1 byte
+        static constexpr uint32_t DEFAULT_ACK_TIMEOUT_MS = 200; // Default timeout for ACK wait
+
         bool init()
         {
             return uart_.init();
@@ -29,7 +34,10 @@ namespace uart_protocol
             uart_.deinit();
         }
 
-        Protocol(uart_protocol::Uart &uart) : uart_(uart) {}
+        // The `explicit` keyword is used to prevent implicit conversions and copy-initialization.
+        // It ensures that the constructor cannot be called with a single argument implicitly,
+        // which helps avoid unintentional conversions that might lead to bugs.
+        explicit Protocol(uart_protocol::Uart &uart) : uart_(uart) {}
 
         // Send a framed data packet over UART.
         // Returns true if the frame was successfully sent.
@@ -40,17 +48,66 @@ namespace uart_protocol
             return uart_.send_data(raw_frame.data(), raw_frame.size());
         }
 
+        /*
+         * Send a framed data packet and wait for an ACK frame.
+         * Returns true if the ACK was received within the timeout period.
+         * @param type Frame type to send.
+         * @param payload Payload data to send.
+         * @param timeout_ms Timeout in milliseconds to wait for the ACK.
+         * @return true if ACK received, false on timeout or error.
+         */
+        bool send_frame_wait_ack(uint8_t type, const std::vector<uint8_t> &payload, uint32_t timeout_ms = DEFAULT_ACK_TIMEOUT_MS)
+        {
+            // Send the frame first
+            if (!send_frame(type, payload))
+            {
+                return false;
+            }
+
+            auto wait_until = std::chrono::steady_clock::now() + std::chrono::milliseconds(timeout_ms);
+            std::vector<uint8_t> recv_buffer;
+            recv_buffer.reserve(MAX_PAYLOAD_SIZE); // Reserve buffer space to avoid multiple allocations
+
+            uint8_t temp_buffer[64]; // Temporary buffer for receiving data
+
+            // Wait for ACK frame
+            while (std::chrono::steady_clock::now() < wait_until)
+            {
+                size_t n = uart_.receive_data(temp_buffer, sizeof(temp_buffer));
+
+                if (n > 0)
+                {
+                    recv_buffer.insert(recv_buffer.end(), temp_buffer, temp_buffer + n);
+
+                    // Try to parse frames from the received buffer
+                    Frame received_frame;
+                    while (parse_frame(recv_buffer, received_frame))
+                    {
+                        // Check if the received frame is an ACK
+                        if (received_frame.type == ACK_TYPE)
+                        {
+                            return true; // ACK received
+                        }
+                    }
+                }
+                else
+                {
+                    // No data received, sleep briefly to avoid busy-waiting
+                    std::this_thread::sleep_for(std::chrono::milliseconds(10));
+                }
+            }
+            return false; // Timeout waiting for ACK
+        }
+
         // Send START_WORD over UART. No payload, just the start word.
         bool send_start_word()
         {
-            constexpr uint8_t TYPE_START = 0x01; // Define a type for START_WORD frame
-            return send_frame(TYPE_START, {});
+            return send_frame(START_WORD_TYPE, {});
         }
 
         // Send ACK frame over UART. No payload, just the ACK frame.
         bool send_ack()
         {
-            constexpr uint8_t ACK_TYPE = 0x02;
             return send_frame(ACK_TYPE, {});
         }
     };
