@@ -8,7 +8,7 @@
 /*
  * Example implementation of Uart interface for PC (Windows-Port) using placeholder functions.
  * This is a mock implementation for demonstration purposes only.
- * 
+ *
  * Producer Uart: Sends frames and waits for ACKs.
  * Receiver Uart: Receives frames and sends ACKs back.
  */
@@ -76,7 +76,9 @@ int main()
                 
                 // Try to parse frame
                 uart_protocol::Frame received_frame;
-                if (uart_protocol::parse_frame(recv_buffer, received_frame)) {
+                size_t consumed_bytes = 0;
+                
+                if (uart_protocol::parse_frame(recv_buffer, received_frame, consumed_bytes)) {
                     std::cout << "Receiver Frame received! Type: 0x" << std::hex << static_cast<int>(received_frame.type) 
                               << ", Payload size: " << std::dec << received_frame.payload.size() << std::endl;
                     
