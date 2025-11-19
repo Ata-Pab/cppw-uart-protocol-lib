@@ -10,3 +10,9 @@ target_include_directories(uart_protocol_lib INTERFACE
     $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
     $<INSTALL_INTERFACE:include>
 )
+
+# Build example executable
+add_executable(pc_uart_protocol_example 
+    examples/win32/pc_uart_protocol_example.cpp
+)
+target_link_libraries(pc_uart_protocol_example PRIVATE uart_protocol_lib)
