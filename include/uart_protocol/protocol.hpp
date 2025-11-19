@@ -60,7 +60,7 @@ namespace uart_protocol
 
             uint32_t start_time = timing::get_tick_ms();
             std::vector<uint8_t> recv_buffer;
-            recv_buffer.reserve(config::MAX_PAYLOAD_SIZE); // Reserve buffer space to avoid multiple allocations
+            recv_buffer.reserve(config::MAX_PAYLOAD_SIZE + 10); // Reserve buffer space to avoid multiple allocations
 
             uint8_t temp_buffer[64]; // Temporary buffer for receiving data
 
@@ -75,13 +75,28 @@ namespace uart_protocol
 
                     // Try to parse frames from the received buffer
                     Frame received_frame;
-                    while (parse_frame(recv_buffer, received_frame))
+                    size_t consumed_bytes = 0;
+                    
+                    while (parse_frame(recv_buffer, received_frame, consumed_bytes))
                     {
+                        // Remove consumed bytes from buffer
+                        recv_buffer.erase(recv_buffer.begin(), recv_buffer.begin() + consumed_bytes);
+                        
                         // Check if the received frame is an ACK
                         if (received_frame.type == config::ACK_TYPE)
                         {
                             return true; // ACK received
                         }
+                        
+                        // Reset for next iteration
+                        consumed_bytes = 0;
+                    }
+                    
+                    // Prevent buffer from growing too large (in case of corrupt data)
+                    if (recv_buffer.size() > config::MAX_PAYLOAD_SIZE * 2)
+                    {
+                        // Clear buffer if it gets too large (corrupt data)
+                        recv_buffer.clear();
                     }
                 }
                 else

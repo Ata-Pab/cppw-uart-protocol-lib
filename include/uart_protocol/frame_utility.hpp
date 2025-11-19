@@ -20,7 +20,7 @@ namespace uart_protocol
         std::vector<uint8_t> payload;
     };
 
-    /* 
+    /*
     @brief
     CRC-16-CCITT Implementation
         * Polynomial: 0x1021
@@ -51,7 +51,7 @@ namespace uart_protocol
         return crc;
     }
 
-    //Construct a raw byte vector from a Frame structure. Returns the raw byte vector.
+    // Construct a raw byte vector from a Frame structure. Returns the raw byte vector.
     inline std::vector<uint8_t> construct_frame(const Frame &frame)
     {
         std::vector<uint8_t> raw_frame; // buffer for the constructed frame
@@ -82,9 +82,12 @@ namespace uart_protocol
         return raw_frame;
     }
 
-    // Parse a raw byte vector into a Frame structure. Returns true on success. 
-    inline bool parse_frame(const std::vector<uint8_t> &data, Frame &out_frame)
+    // Parse a raw byte vector into a Frame structure. Returns true on success.
+    // If successful, consumed_bytes indicates how many bytes were used from the buffer.
+    inline bool parse_frame(const std::vector<uint8_t> &data, Frame &out_frame, size_t &consumed_bytes)
     {
+        consumed_bytes = 0;
+
         // Minimum frame size: START_WORD (2) + LEN (1) + TYPE (1) + CRC16 (2) = 6 bytes
         if (data.size() < 6)
         {
@@ -103,15 +106,16 @@ namespace uart_protocol
         uint8_t payload_len = data[2];
 
         // Check if the total size matches LEN
-        if (data.size() < static_cast<size_t>(6 + payload_len)) // 6 = 2 (START_WORD) + 1 (LEN) + 1 (TYPE) + 2 (CRC16)
+        size_t frame_size = 6 + payload_len; // 6 = 2 (START_WORD) + 1 (LEN) + 1 (TYPE) + 2 (CRC16)
+        if (data.size() < frame_size)
         {
             // Wait for more data
             return false;
         }
 
         // Calculate and verify CRC16
-        uint16_t received_crc = static_cast<uint16_t>(data[data.size() - 2]) | (static_cast<uint16_t>(data[data.size() - 1]) << 8);
-        uint16_t calculated_crc = crc16_ccitt(data.data(), data.size() - 2);
+        uint16_t received_crc = static_cast<uint16_t>(data[frame_size - 2]) | (static_cast<uint16_t>(data[frame_size - 1]) << 8);
+        uint16_t calculated_crc = crc16_ccitt(data.data(), frame_size - 2);
         if (received_crc != calculated_crc)
         {
             // CRC mismatch
@@ -122,7 +126,7 @@ namespace uart_protocol
         out_frame.type = data[3];
         out_frame.payload.assign(data.begin() + 4, data.begin() + 4 + payload_len); // 4 bytes offset to start of payload
 
+        consumed_bytes = frame_size; // Indicate how many bytes were consumed
         return true;
     }
-
 }
