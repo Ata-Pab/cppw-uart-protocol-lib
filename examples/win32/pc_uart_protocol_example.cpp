@@ -45,6 +45,7 @@ int main()
               << std::endl;
 
     // Test 2: Producer sends frame and waits for ACK, receiver receives and sends ACK back
+    // The Test 2 is in the development phase, do not trust its correctness yet
     std::cout << "=== Test 2: Producer sends frame with ACK (bidirectional communication) ===" << std::endl;
 
     std::atomic<bool> test_complete{false};
