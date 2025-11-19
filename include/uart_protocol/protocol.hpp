@@ -2,16 +2,14 @@
 #include "peripheral.hpp"
 #include "protocol_config.hpp"
 #include "frame_utility.hpp"
+#include "timing_utility.hpp"
 #include <vector>
-#include <chrono>
-#include <thread>
 
 /*
  * UART Protocol - Protocol layer implementation for UART communication.
  * This class provides methods to send and receive framed data over UART using the Uart interface.
  * It handles high-level operations: send_frame, wait_ack, send_start_word, etc.
- * This implementation is intentionally portable and blocking. For embedded you can
- * provide different wait mechanism (RTOS event, ISR, DMA callback).
+ * This implementation is portable across platforms using the timing_utility abstraction.
  */
 namespace uart_protocol
 {
@@ -60,14 +58,14 @@ namespace uart_protocol
                 return false;
             }
 
-            auto wait_until = std::chrono::steady_clock::now() + std::chrono::milliseconds(timeout_ms);
+            uint32_t start_time = timing::get_tick_ms();
             std::vector<uint8_t> recv_buffer;
             recv_buffer.reserve(config::MAX_PAYLOAD_SIZE); // Reserve buffer space to avoid multiple allocations
 
             uint8_t temp_buffer[64]; // Temporary buffer for receiving data
 
             // Wait for ACK frame
-            while (std::chrono::steady_clock::now() < wait_until)
+            while (!timing::has_elapsed(start_time, timeout_ms))
             {
                 size_t n = uart_.receive_data(temp_buffer, sizeof(temp_buffer));
 
@@ -89,7 +87,7 @@ namespace uart_protocol
                 else
                 {
                     // No data received, sleep briefly to avoid busy-waiting
-                    std::this_thread::sleep_for(std::chrono::milliseconds(10));
+                    timing::delay_ms(10);
                 }
             }
             return false; // Timeout waiting for ACK
