@@ -11,8 +11,6 @@
 
 int main()
 {
-    constexpr uint8_t WRITE_MULTIPLE_DATA_TYPE = 0x10;
-
     // Create two UartDemo instances to simulate producer and receiver, a <-> b cross-connection by moving data between a.tx and b.rx, etc.
     uart_protocol::UartDemo producer_uart;
     uart_protocol::UartDemo receiver_uart;
@@ -29,7 +27,7 @@ int main()
     // SIMULATE Connection: In a real scenario, data sent from producer_uart would be received by receiver_uart.
     // Here we simulate this by transferring data from producer's tx_buffer_ to receiver's rx_buffer_ and reading it by pushing to receiver_uart
 
-    producer_protocol.send_frame(WRITE_MULTIPLE_DATA_TYPE, {0xDE, 0xAD, 0xBE, 0xEF});
+    producer_protocol.send_frame(uart_protocol::config::DATA_TYPE, {0xDE, 0xAD, 0xBE, 0xEF});
     // Simulate data transfer from producer to receiver
     auto sent_data = producer_uart.simulate_clear_tx_buffer();
     for (auto byte : sent_data)
@@ -38,7 +36,7 @@ int main()
     }
 
     // Send frame and wait for ACK
-    bool ack_received = receiver_protocol.send_frame_wait_ack(WRITE_MULTIPLE_DATA_TYPE, {0xDE, 0xAD, 0xBE, 0xEF}, 500);
+    bool ack_received = receiver_protocol.send_frame_wait_ack(uart_protocol::config::DATA_TYPE, {0xDE, 0xAD, 0xBE, 0xEF}, 500);
     if (ack_received)
     {
         std::cout << "ACK received by receiver_protocol." << std::endl;
