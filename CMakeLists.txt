@@ -16,3 +16,9 @@ add_executable(pc_uart_protocol_example
     examples/win32/pc_uart_protocol_example.cpp
 )
 target_link_libraries(pc_uart_protocol_example PRIVATE uart_protocol_lib)
+
+# Build logger example executable
+add_executable(pc_logger_example 
+    examples/win32/pc_logger_example.cpp
+)
+target_link_libraries(pc_logger_example PRIVATE uart_protocol_lib)
