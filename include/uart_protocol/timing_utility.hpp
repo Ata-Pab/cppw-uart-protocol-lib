@@ -1,5 +1,6 @@
 #pragma once
 #include <cstdint>
+#include "ProtocolConfig.hpp"
 
 // Include platform-specific headers
 #if defined(USE_FREERTOS) /* FreeRTOS Implementation */

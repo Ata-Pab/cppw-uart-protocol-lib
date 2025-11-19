@@ -10,7 +10,7 @@ This repo contains a C++ library for implementing a modern UART communication pr
     │  ├─ uart_protocol/
     │  │  ├─ peripheral.hpp
     │  │  ├─ protocol.hpp
-    │  │  ├─ protocol_config.hpp        
+    │  │  ├─ ProtocolConfig.hpp        
     │  │  └─ frame_utility.hpp
     │  ├─ porting/
     │  │  ├─ win32/

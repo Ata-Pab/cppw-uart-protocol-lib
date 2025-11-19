@@ -1,6 +1,6 @@
 #pragma once
 #include "peripheral.hpp"
-#include "protocol_config.hpp"
+#include "ProtocolConfig.hpp"
 #include "frame_utility.hpp"
 #include "timing_utility.hpp"
 #include <vector>

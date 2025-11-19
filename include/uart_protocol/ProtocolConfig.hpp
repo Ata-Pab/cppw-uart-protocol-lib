@@ -2,6 +2,10 @@
 #include <cstdint>
 #include <cstddef>
 
+#ifndef USE_STD_CHRONO
+    #define USE_STD_CHRONO // Define the platform for timing utility
+#endif
+
 namespace uart_protocol::config
 {
     // Protocol frame start word
